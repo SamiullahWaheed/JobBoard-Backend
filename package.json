@@ -1,6 +1,6 @@
 {
   "name": "jobboard-backend",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Express MVC API for JobBoard",
   "main": "src/server.js",
   "scripts": {
@@ -12,10 +12,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.7.0"
+    "mongoose": "^9.7.0",
+    "multer": "^2.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

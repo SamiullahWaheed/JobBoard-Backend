@@ -25,6 +25,24 @@ const jobSchema = new mongoose.Schema(
     deadline: { type: Date, required: true },
     experience: { type: String, required: true, trim: true, maxlength: 240 },
     jobType: { type: String, required: true, enum: ["full-time", "part-time", "contract"] },
+    requirements: {
+      type: [{ type: String, trim: true, maxlength: 500 }],
+      default: [],
+    },
+    applyUrl: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+      default: "",
+      validate: {
+        validator(value) {
+          return !value || /^https?:\/\/\S+$/i.test(value);
+        },
+        message: "Apply URL must start with http:// or https://",
+      },
+    },
+    imageUrl: { type: String, trim: true, maxlength: 1500, default: "" },
+    imagePublicId: { type: String, trim: true, maxlength: 500, default: "" },
   },
   {
     timestamps: true,
@@ -38,7 +56,13 @@ const jobSchema = new mongoose.Schema(
   },
 );
 
-jobSchema.index({ title: "text", company: "text", description: "text", location: "text" });
+jobSchema.index({
+  title: "text",
+  company: "text",
+  description: "text",
+  location: "text",
+  requirements: "text",
+});
 jobSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Job", jobSchema);

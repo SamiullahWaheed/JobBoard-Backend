@@ -1,5 +1,6 @@
 const Job = require("../models/Job");
 const FeaturedJob = require("../models/FeaturedJob");
+const { deleteJobImage } = require("../config/cloudinary");
 
 const allowedFields = [
   "title",
@@ -12,6 +13,10 @@ const allowedFields = [
   "deadline",
   "experience",
   "jobType",
+  "requirements",
+  "applyUrl",
+  "imageUrl",
+  "imagePublicId",
 ];
 
 function pickJobFields(input) {
@@ -19,6 +24,16 @@ function pickJobFields(input) {
     if (input[field] !== undefined) result[field] = input[field];
     return result;
   }, {});
+}
+
+function normalizeJobFields(input) {
+  const fields = pickJobFields(input);
+  if (Array.isArray(fields.requirements)) {
+    fields.requirements = fields.requirements
+      .map((requirement) => String(requirement).trim())
+      .filter(Boolean);
+  }
+  return fields;
 }
 
 async function syncFeaturedJob(job, shouldFeature) {
@@ -84,18 +99,27 @@ async function getJob(req, res) {
 }
 
 async function createJob(req, res) {
-  const job = await Job.create(pickJobFields(req.body));
+  const job = await Job.create(normalizeJobFields(req.body));
   await syncFeaturedJob(job, req.body.featured === true);
   const [serializedJob] = await attachFeaturedState([job]);
   res.status(201).json({ job: serializedJob });
 }
 
 async function updateJob(req, res) {
-  const job = await Job.findByIdAndUpdate(req.params.id, pickJobFields(req.body), {
-    new: true,
-    runValidators: true,
-  });
+  const job = await Job.findById(req.params.id);
   if (!job) return res.status(404).json({ message: "Job not found." });
+
+  const previousImagePublicId = job.imagePublicId;
+  job.set(normalizeJobFields(req.body));
+  await job.save();
+
+  if (
+    previousImagePublicId &&
+    job.imagePublicId &&
+    previousImagePublicId !== job.imagePublicId
+  ) {
+    await deleteJobImage(previousImagePublicId);
+  }
   await syncFeaturedJob(job, req.body.featured === true);
   const [serializedJob] = await attachFeaturedState([job]);
   res.json({ job: serializedJob });
@@ -105,6 +129,7 @@ async function deleteJob(req, res) {
   const job = await Job.findByIdAndDelete(req.params.id);
   if (!job) return res.status(404).json({ message: "Job not found." });
   await FeaturedJob.deleteOne({ job: job._id });
+  await deleteJobImage(job.imagePublicId);
   res.json({ message: "Job deleted." });
 }
 

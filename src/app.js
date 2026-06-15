@@ -3,6 +3,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const featuredJobRoutes = require("./routes/featuredJobRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -17,11 +18,18 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "JobBoard API" });
+  res.json({
+    status: "ok",
+    service: "JobBoard API",
+    version: "2.1.0",
+    features: ["job-image-upload", "featured-jobs", "cloudinary-seeding"],
+  });
 });
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/featured-jobs", featuredJobRoutes);
+app.use("/api/uploads", uploadRoutes);
+app.use("/api/upload", uploadRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

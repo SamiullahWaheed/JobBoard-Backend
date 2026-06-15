@@ -17,6 +17,10 @@ function errorHandler(error, _req, res, _next) {
     return res.status(400).json({ message: "Invalid resource id." });
   }
 
+  if (error.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ message: "Image must be 5 MB or smaller." });
+  }
+
   res.status(error.status || 500).json({
     message: error.message || "An unexpected server error occurred.",
   });
